@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELMOSE</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body { font-family: Arial, Helvetica, sans-serif; background: #000; perspective: 1000px; }
+
+/* Arka Plan Videosu */
+.bg-video {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    object-position: center center;
+    z-index: -3;
+}
+
+@media (min-aspect-ratio: 16/9) {
+    .bg-video { width: 100vw; height: auto; }
+}
+
+@media (max-aspect-ratio: 16/9) {
+    .bg-video { width: auto; height: 100vh; }
+}
+
+.video-shade { position: fixed; inset: 0; background: rgba(0,0,0,.15); z-index: -2; pointer-events: none; }
+
+/* Sol Üst Menü / Ses Paneli */
+.grid-button { position: fixed; top: 10px; left: 12px; border: 0; background: transparent; color: rgba(255,255,255,0.7); font-size: 16px; z-index: 5; cursor: pointer; transition: color 0.2s; }
+.grid-button:hover { color: #fff; }
+
+.volume-panel {
+    position: fixed;
+    left: 12px;
+    top: 42px;
+    width: 130px;
+    height: 44px;
+    padding: 6px 10px;
+    border-radius: 12px;
+    background: rgba(20, 30, 25, 0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 5;
+}
+
+#muteBtn { width: 28px; height: 28px; border: 0; background: transparent; color: #fff; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+#volume { width: 70px; accent-color: #00ff80; cursor: pointer; }
+
+/* Ortadaki Kart Tasarımı */
+.card {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: min(650px, calc(100vw - 38px));
+    min-height: 363px;
+    padding: 25px 28px 23px;
+    border-radius: 23px;
+    color: #fff;
+    background: linear-gradient(135deg, rgba(18,133,101,.69), rgba(12,101,91,.57));
+    border: 1.5px solid rgba(54,255,131,.95);
+    box-shadow: 0 0 25px rgba(36,255,126,.2), inset 0 0 35px rgba(255,255,255,.035);
+    backdrop-filter: blur(7px) saturate(125%);
+    -webkit-backdrop-filter: blur(7px) saturate(125%);
+    overflow: hidden;
+    transform-style: preserve-3d;
+    will-change: transform;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s ease-out;
+}
+
+.card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,.05), transparent 75%); pointer-events: none; }
+.profile-row { display: flex; align-items: center; gap: 20px; position: relative; z-index: 1; }
+.avatar { width: 100px; height: 100px; object-fit: cover; border-radius: 20px; border: 1px solid rgba(255,255,255,.38); }
+h1 { font-size: 34px; line-height: 1.1; margin-bottom: 8px; font-weight: 700; }
+.dm { display: inline-block; padding: 7px 13px; border-radius: 20px; background: rgba(0,70,52,.43); font-size: 12px; font-weight: 700; }
+.card-line { height: 1px; margin: 8px 0 12px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.13), transparent); }
+.details { position: relative; z-index: 1; text-align: center; }
+.details div { width: 70%; margin: auto; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.10); font-family: monospace; font-size: 14px; font-weight: 700; letter-spacing: 5px; }
+.socials { position: relative; z-index: 1; display: flex; justify-content: center; gap: 12px; margin-top: 30px; }
+.socials a { width: 44px; height: 44px; border-radius: 15px; display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; font-size: 19px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); transition: .22s ease; z-index: 2; }
+.socials a:hover { transform: translateY(-3px); background: rgba(255,255,255,.18); }
+.location { position: relative; z-index: 1; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 23px; font-size: 13px; font-weight: 700; }
+.location i { font-size: 16px; }
+footer { position: fixed; left: 0; bottom: 17px; width: 100%; text-align: center; color: #fff; font: 700 12px monospace; text-shadow: 0 1px 6px #000; z-index: 10; }
+</style>
+</head>
+<body>
+
+<!-- Arka Plan Videosu -->
+<video id="bgVideo" class="bg-video" autoplay muted loop playsinline preload="auto">
+  <source src="assets/arkaplan.mp4" type="video/mp4">
+</video>
+<div class="video-shade"></div>
+
+
+<button class="grid-button" aria-label="Menü"><i class="fa-solid fa-grip"></i></button>
+
+<div class="volume-panel">
+  <button id="muteBtn" aria-label="Ses"><i class="fa-solid fa-volume-xmark"></i></button>
+  <input id="volume" type="range" min="0" max="1" step="0.01" value="0.5">
+</div>
+
+
+<main class="card" id="tiltCard">
+  <div class="profile-row">
+    <img class="avatar" src="assets/profile.jpeg" alt="Profil">
+    <div>
+      <h1>Elmose.xx</h1>
+      <div class="dm">Tüm işlemler için DM.</div>
+    </div>
+  </div>
+
+  <div class="card-line"></div>
+
+  <section class="details">
+    <div>Web And app</div>
+    <div>full Stack Dev</div>
+    <div>21 Years</div>
+  </section>
+
+  <div class="socials">
+    <a href="https://discord.com" target="_blank" aria-label="Discord"><i class="fa-brands fa-discord"></i></a>
+    <a href="https://www.instagram.com/emirlopers/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+  </div>
+
+  <div class="location">
+    <i class="fa-solid fa-location-dot"></i>
+    <span>İn KAHRAMANMARAŞ</span>
+  </div>
+</main>
+
+<footer>© 2016 emirloper All rights reserved.</footer>
+
+<script>
+const video = document.getElementById("bgVideo");
+const muteBtn = document.getElementById("muteBtn");
+const volume = document.getElementById("volume");
+
+video.volume = 0.5;
+
+function setIcon() {
+    muteBtn.innerHTML = video.muted || video.volume === 0 ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+}
+setIcon();
+
+document.addEventListener("click", () => {
+    if (video.muted) {
+        video.muted = false;
+        video.volume = Number(volume.value) || 0.5;
+        setIcon();
+    }
+}, { once: true });
+
+muteBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (video.muted) {
+        video.muted = false;
+        video.volume = Number(volume.value) || 0.5;
+        if (video.volume === 0) { video.volume = .5; volume.value = .5; }
+    } else {
+        video.muted = true;
+    }
+    setIcon();
+});
+
+volume.addEventListener("input", () => {
+    video.volume = Number(volume.value);
+    video.muted = video.volume === 0;
+    setIcon();
+});
+
+const card = document.getElementById('tiltCard');
+
+card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const rotateX = -(y - centerY) / 35;
+    const rotateY = (x - centerX) / 35;
+    
+    card.style.transform = `translate(-50%, -50%) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    card.style.transition = 'transform 0.1s ease-out';
+});
+
+card.addEventListener('mouseleave', () => {
+    card.style.transition = 'transform 0.5s ease';
+    card.style.transform = `translate(-50%, -50%) rotateX(0deg) rotateY(0deg)`;
+});
+</script>
+
+</body>
+</html>
